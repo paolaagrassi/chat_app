@@ -54,7 +54,7 @@ class HomePageView extends StatelessWidget {
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const LoginPageView(),
+                              builder: (context) => LoginPageView(),
                             ),
                           );
                         },

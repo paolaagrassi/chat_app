@@ -32,12 +32,12 @@ class CustomCalendarField extends StatelessWidget {
         DateTime? pickedDate = await showDatePicker(
             context: context,
             initialDate: DateTime.now(),
-            firstDate: DateTime(1940),
+            firstDate: DateTime(1970),
             lastDate: DateTime.now(),
             builder: (context, child) => Theme(
                   data: Theme.of(context).copyWith(
                     colorScheme: const ColorScheme.light(
-                      primary: Color.fromARGB(255, 53, 5, 75),
+                      primary: Color.fromARGB(255, 136, 22, 230),
                       onPrimary: Colors.white, // <-- SEE HERE
                       onSurface: Colors.black, // <-- SEE HERE
                     ),

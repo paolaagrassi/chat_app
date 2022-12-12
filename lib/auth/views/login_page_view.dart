@@ -1,17 +1,28 @@
-import 'package:chat_app/auth/views/views.dart';
-import 'package:chat_app/shared/widgets/widgets.dart';
+// ignore_for_file: must_be_immutable
+
+import 'package:chat_app/chat/views/chat_room.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:validatorless/validatorless.dart';
 
-class LoginPageView extends StatefulWidget {
-  const LoginPageView({super.key});
+import 'package:chat_app/auth/controllers/controllers.dart';
+import 'package:chat_app/auth/views/views.dart';
+import 'package:chat_app/auth/views/widgets/widgets.dart';
+import 'package:chat_app/shared/widgets/widgets.dart';
 
-  @override
-  State<LoginPageView> createState() => _LoginPageViewState();
-}
+class LoginPageView extends WidgetState<LoginController> {
+  LoginPageView({super.key});
 
-class _LoginPageViewState extends State<LoginPageView> {
+  final _formKey = GlobalKey<FormState>();
+
   @override
   Widget build(BuildContext context) {
+    ValueNotifier<bool> isAuthFormValid = useState(false);
+
+    ValueNotifier<bool> isHiden = useState(true);
+
     return Scaffold(
         body: SingleChildScrollView(
       child: Padding(
@@ -35,15 +46,43 @@ class _LoginPageViewState extends State<LoginPageView> {
                   children: [
                     SizedBox(
                       height: MediaQuery.of(context).size.height * 0.3,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: const [
-                          CustomTextField(hintText: 'Email'),
-                          CustomTextField(
-                            suffixIcon: Icon(Icons.visibility),
-                            hintText: 'Password',
-                          ),
-                        ],
+                      child: Form(
+                        key: _formKey,
+                        onChanged: () {
+                          final isFormValid = _formKey.currentState!.validate();
+
+                          if (isAuthFormValid.value != isFormValid) {
+                            isAuthFormValid.value = isFormValid;
+                          }
+                        },
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            CustomTextField(
+                              hintText: 'Email',
+                              controller: controller.emailTextEditingController,
+                              validator: Validatorless.multiple([
+                                Validatorless.required('Field cannot be null')
+                              ]),
+                              obscureText: false,
+                            ),
+                            CustomTextField(
+                              hintText: 'Password',
+                              controller:
+                                  controller.passwordTextEditingController,
+                              validator: Validatorless.multiple([
+                                Validatorless.required('Field cannot be null')
+                              ]),
+                              obscureText: isHiden.value,
+                              suffixIcon: CustomObscureTextGestureDetector(
+                                obscureText: isHiden.value,
+                                onTap: () {
+                                  isHiden.value = !isHiden.value;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     SizedBox(
@@ -57,7 +96,39 @@ class _LoginPageViewState extends State<LoginPageView> {
                             false,
                             null,
                             null,
-                            () {},
+                            isAuthFormValid.value
+                                ? () {
+                                    final emailTextEditingController =
+                                        controller
+                                            .emailTextEditingController.text;
+                                    final passwordTextEditingController =
+                                        controller
+                                            .passwordTextEditingController.text;
+
+                                    controller
+                                        .login(emailTextEditingController,
+                                            passwordTextEditingController)
+                                        .then((value) {
+                                      if (value) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const ChatRoom(),
+                                          ),
+                                        );
+                                      } else {
+                                        Fluttertoast.showToast(
+                                          msg:
+                                              'Please enter with a valid email/password',
+                                          backgroundColor: const Color.fromARGB(
+                                              179, 173, 12, 0),
+                                          gravity: ToastGravity.BOTTOM,
+                                        );
+                                      }
+                                    });
+                                  }
+                                : null,
                           ),
                           Row(
                             children: const [
@@ -88,7 +159,9 @@ class _LoginPageViewState extends State<LoginPageView> {
                             false,
                             Colors.black,
                             Colors.white,
-                            () {},
+                            () {
+                              GoogleSignIn().signIn();
+                            },
                           ),
                         ],
                       ),
@@ -109,8 +182,7 @@ class _LoginPageViewState extends State<LoginPageView> {
                               await Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      const RegisterPageView(),
+                                  builder: (context) => RegisterPageView(),
                                 ),
                               );
                             },

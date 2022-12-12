@@ -1,25 +1,31 @@
+import 'package:chat_app/auth/controllers/controllers.dart';
 import 'package:chat_app/auth/views/views.dart';
+import 'package:chat_app/auth/views/widgets/widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:validatorless/validatorless.dart';
 
 import '../../shared/widgets/widgets.dart';
 
-class RegisterPageView extends StatefulWidget {
-  const RegisterPageView({super.key});
+class RegisterPageView extends WidgetState<RegisterController> {
+  RegisterPageView({super.key});
 
-  @override
-  State<RegisterPageView> createState() => _RegisterPageViewState();
-}
+  final _formKey = GlobalKey<FormState>();
 
-class _RegisterPageViewState extends State<RegisterPageView> {
   @override
   Widget build(BuildContext context) {
+    ValueNotifier<bool> isAuthFormValid = useState(false);
+
+    ValueNotifier<bool> isHiden = useState(true);
+
     return Scaffold(
       body: SafeArea(
+          child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.9,
           child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.9,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,21 +49,59 @@ class _RegisterPageViewState extends State<RegisterPageView> {
                   ),
                 ),
                 SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.6,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: const [
-                      CustomTextField(hintText: 'Name'),
-                      CustomTextField(hintText: 'Email'),
-                      CustomTextField(
-                        suffixIcon: Icon(Icons.visibility),
-                        hintText: 'Password',
-                      ),
-                      CustomTextField(
-                        suffixIcon: Icon(Icons.visibility),
-                        hintText: 'Confirm password',
-                      ),
-                    ],
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: Form(
+                    key: _formKey,
+                    onChanged: () {
+                      final isFormValid = _formKey.currentState!.validate();
+
+                      if (isAuthFormValid.value != isFormValid) {
+                        isAuthFormValid.value = isFormValid;
+                      }
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        CustomTextField(
+                          hintText: 'Name',
+                          controller: controller.userNameTextEditingController,
+                          obscureText: false,
+                          validator: Validatorless.multiple(
+                              [Validatorless.required('Field cannot be null')]),
+                        ),
+                        CustomCalendarField(
+                            controller:
+                                controller.userBirthTextEditingController),
+                        CustomTextField(
+                          hintText: 'Email',
+                          controller: controller.emailTextEditingController,
+                          obscureText: false,
+                          validator: Validatorless.multiple(
+                              [Validatorless.required('Field cannot be null')]),
+                        ),
+                        CustomTextField(
+                          hintText: 'Password',
+                          controller: controller.passwordTextEditingController,
+                          obscureText: isHiden.value,
+                          validator: Validatorless.multiple(
+                              [Validatorless.required('Field cannot be null')]),
+                        ),
+                        CustomTextField(
+                          hintText: 'Confirm password',
+                          controller:
+                              controller.passwordConfirmTextEditingController,
+                          obscureText: isHiden.value,
+                          suffixIcon: CustomObscureTextGestureDetector(
+                            obscureText: isHiden.value,
+                            onTap: () {
+                              isHiden.value = !isHiden.value;
+                            },
+                          ),
+                          validator: Validatorless.multiple(
+                              [Validatorless.required('Field cannot be null')]),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 SizedBox(
@@ -70,7 +114,65 @@ class _RegisterPageViewState extends State<RegisterPageView> {
                         false,
                         null,
                         null,
-                        () {},
+                        isAuthFormValid.value
+                            ? () {
+                                final userBirthTextEditingController =
+                                    controller
+                                        .userBirthTextEditingController.text;
+
+                                final userNameTextEditingController = controller
+                                    .userNameTextEditingController.text;
+
+                                final passwordConfirmTextEditingController =
+                                    controller
+                                        .passwordConfirmTextEditingController
+                                        .text;
+
+                                var passwordTextEditingController = controller
+                                    .passwordTextEditingController.text;
+
+                                final emailTextEditingController =
+                                    controller.emailTextEditingController.text;
+
+                                bool isPasswordConfirmed =
+                                    passwordConfirmTextEditingController ==
+                                        passwordTextEditingController;
+
+                                if (isPasswordConfirmed) {
+                                  passwordTextEditingController =
+                                      passwordConfirmTextEditingController;
+
+                                  controller
+                                      .registerUser(
+                                    emailTextEditingController,
+                                    passwordTextEditingController,
+                                    userNameTextEditingController,
+                                    userBirthTextEditingController,
+                                    emailTextEditingController,
+                                  )
+                                      .then(
+                                    (value) {
+                                      if (value) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                LoginPageView(),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                  );
+                                } else {
+                                  Fluttertoast.showToast(
+                                    msg: 'The passwords must be equals',
+                                    backgroundColor:
+                                        const Color.fromARGB(179, 173, 12, 0),
+                                    gravity: ToastGravity.BOTTOM,
+                                  );
+                                }
+                              }
+                            : null,
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -84,7 +186,7 @@ class _RegisterPageViewState extends State<RegisterPageView> {
                               await Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const LoginPageView(),
+                                  builder: (context) => LoginPageView(),
                                 ),
                               );
                             },
