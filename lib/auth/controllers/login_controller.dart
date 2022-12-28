@@ -10,6 +10,9 @@ abstract class LoginController extends BaseController {
 
   late TextEditingController passwordTextEditingController =
       TextEditingController();
+
+  String? validateEmailAddress(String? emailAddress);
+  String? validatePassword(String? password);
 }
 
 class LoginControllerImpl implements LoginController {
@@ -33,4 +36,17 @@ class LoginControllerImpl implements LoginController {
 
     return result.isSuccess;
   }
+
+  @override
+  String? validateEmailAddress(String? emailAddress) => (emailAddress != null &&
+          emailAddress.isNotEmpty &&
+          emailAddress.contains('@'))
+      ? null
+      : "Please, enter with a valid email.";
+
+  @override
+  String? validatePassword(String? password) =>
+      password != null && password.length > 5
+          ? null
+          : 'Please, the password must be at least 6 characters.';
 }
