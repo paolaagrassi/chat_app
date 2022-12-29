@@ -6,7 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:kiwi/kiwi.dart';
 import 'firebase_options.dart';
 
-import 'app.dart';
+import 'app_widget.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,5 +42,5 @@ void main() async {
     ),
   );
 
-  runApp(const App());
+  runApp(const AppWidget());
 }
